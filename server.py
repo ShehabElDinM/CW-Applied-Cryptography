@@ -1,5 +1,6 @@
-# server
+# server.py
 import socket
+from des_encryption import decrypt_message  # Import DES decryption
 
 # Server settings
 SERVER_HOST = '127.0.0.1'
@@ -18,10 +19,15 @@ while True:
 
     while True:
         # Receive messages from the client
-        message = client_socket.recv(1024).decode()
-        if not message:
+        encrypted_message = client_socket.recv(1024).decode()
+        if not encrypted_message:
             break
-        print("Received:", message)
+        try:
+            # Decrypt the received message
+            message = decrypt_message(encrypted_message)
+            print("Received:", message)
+        except Exception as e:
+            print("Failed to decrypt message:", e)
     
     client_socket.close()
     print(f"Connection closed from {client_address}")

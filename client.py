@@ -5,6 +5,7 @@ import socket
 import os
 from rsa_encryption import encrypt_data, decrypt_data
 from security import hash_password, verify_password  # Import from security.py
+from des_encryption import encrypt_message  # Import DES encryption
 
 # Server settings
 SERVER_HOST = '127.0.0.1'
@@ -22,9 +23,10 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((SERVER_HOST, SERVER_PORT))
 
 def communicate_with_server(data):
-    """Send a message to the server."""
+    """Send an encrypted message to the server."""
     try:
-        client_socket.sendall(data.encode())
+        encrypted_data = encrypt_message(data)
+        client_socket.sendall(encrypted_data.encode())
     except Exception as e:
         print("Failed to send message to server:", e)
 
@@ -134,9 +136,14 @@ def record_money_transfer():
     
     if account_id and transfer_amount and active_user:
         try:
-            # Log the transfer data to the local file
+            # Encrypt the transfer data before storing it in transfers.txt
+            transfer_data = f"{active_user},{account_id},{transfer_amount}"
+            encrypted_transfer_data = encrypt_message(transfer_data)
+            
+            # Log the encrypted transfer data to the local file
             with open(TRANSFER_LOG, "a") as file:
-                file.write(f"{active_user},{account_id},{transfer_amount}\n")
+                file.write(f"{encrypted_transfer_data}\n")
+            
             # Also send the information to the server
             communicate_with_server(f"Transfer submitted by {active_user}: {transfer_amount} to account {account_id}")
             messagebox.showinfo("Success", "Transfer recorded successfully.")
@@ -144,6 +151,7 @@ def record_money_transfer():
             messagebox.showerror("Error", f"Transfer failed: {e}")
     else:
         messagebox.showerror("Error", "All fields are required.")
+
 
 def initiate_transfer_portal():
     # Transfer interface
